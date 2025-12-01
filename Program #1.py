@@ -1,77 +1,63 @@
 import sqlite3
 
-DB_FILE = "cities.db"
-
-
-def print_city_list(rows):
-    if not rows:
-        print("No cities found.")
-        return
-    for city in rows:
-        city_id, name, population = city
-        print(f"{name:<20}  Population: {population}")
 
 def main():
-    cursor = sqlite3.connect(DB_FILE).cursor()
+    conn = sqlite3.connect('cities.db')
 
-    while True:
-        print("\nCity Database Menu")
-        print("1. Display cities sorted by population (ascending)")
-        print("2. Display cities sorted by population (descending)")
-        print("3. Display cities sorted by name")
-        print("4. Display total population")
-        print("5. Display average population")
-        print("6. Display city with highest population")
-        print("7. Display city with lowest population")
-        print(" type exit to Exit")
+    cur = conn.cursor()
 
-        numChoice = input("\nEnter a number: ")
+    add_cities_table(cur)
 
-        if numChoice == "1":
-            cursor.execute("SELECT * FROM Cities ORDER BY Population ASC")
-            print("\nCities sorted by population (ascending):")
-            print_city_list(cursor.fetchall())
+    add_cities(cur)
 
-        elif numChoice == "2":
-            cursor.execute("SELECT * FROM Cities ORDER BY Population DESC")
-            print("\nCities sorted by population (descending):")
-            print_city_list(cursor.fetchall())
+    conn.commit()
 
-        elif numChoice == "3":
-            cursor.execute("SELECT * FROM Cities ORDER BY CityName ASC")
-            print("\nCities sorted by name:")
-            print_city_list(cursor.fetchall())
+    display_cities(cur)
 
-        elif numChoice == "4":
-            cursor.execute("SELECT SUM(Population) FROM Cities")
-            total = cursor.fetchone()[0]
-            print(f"\nTotal population: {total}")
+    conn.close()
 
-        elif numChoice == "5":
-            cursor.execute("SELECT AVG(Population) FROM Cities")
-            avg = cursor.fetchone()[0]
-            print(f"\nAverage population: {avg}")
+def add_cities_table(cur):
 
-        elif numChoice == "6":
-            cursor.execute("SELECT * FROM Cities ORDER BY Population DESC LIMIT 1")
-            row = cursor.fetchone()
-            print("\nCity with highest population:")
-            print_city_list([row])
+    cur.execute('DROP TABLE IF EXISTS Cities')
 
-        elif numChoice == "7":
-            cursor.execute("SELECT * FROM Cities ORDER BY Population ASC LIMIT 1")
-            row = cursor.fetchone()
-            print("\nCity with lowest population:")
-            print_city_list([row])
-
-        elif numChoice.lower() == "exit":
-            break
-
-        else:
-            print("Invalid choice. Enter a number 1–8.")
-
-    sqlite3.connect(DB_FILE).close()
+    cur.execute('''CREATE TABLE Cities (CityID INTEGER PRIMARY KEY NOT NULL,
+                                        CityName TEXT,
+                                        Population REAL)''')
 
 
-if __name__ == "__main__":
+def add_cities(cur):
+    cities_pop = [(1, 'Tokyo', 38001000),
+                  (2, 'Delhi', 25703168),
+                  (3, 'Shanghai', 23740778),
+                  (4, 'Sao Paulo', 21066245),
+                  (5, 'Mumbai', 21042538),
+                  (6, 'Mexico City', 20998543),
+                  (7, 'Beijing', 20383994),
+                  (8, 'Osaka', 20237645),
+                  (9, 'Cairo', 18771769),
+                  (10, 'New York', 18593220),
+                  (11, 'Dhaka', 17598228),
+                  (12, 'Karachi', 16617644),
+                  (13, 'Buenos Aires', 15180176),
+                  (14, 'Kolkata', 14864919),
+                  (15, 'Istanbul', 14163989),
+                  (16, 'Chongqing', 13331579),
+                  (17, 'Lagos', 13122829),
+                  (18, 'Manila', 12946263),
+                  (19, 'Rio de Janeiro', 12902306),
+                  (20, 'Guangzhou', 12458130)]
+
+    for row in cities_pop:
+        cur.execute('''INSERT INTO Cities (CityID, CityName, Population)
+                       VALUES (?, ?, ?)''', (row[0], row[1], row[2]))
+
+
+def display_cities(cur):
+    print('Contents of cities.db/Cities table:')
+    cur.execute('SELECT * FROM Cities')
+    results = cur.fetchall()
+    for row in results:
+        print(f'{row[0]:<3}{row[1]:20}{row[2]:,.0f}')
+
+if __name__ == '__main__':
     main()
